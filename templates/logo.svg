@@ -1,0 +1,38 @@
+<svg width="100%" height="200" viewBox="0 0 1200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Main background gradient for a modern feel -->
+    <rect x="0" y="0" width="1200" height="200" fill="url(#headerGradient)" />
+    <defs>
+        <linearGradient id="headerGradient" x1="0" y1="100" x2="1200" y2="100"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#3B82F6" />
+            <stop offset="1" stop-color="#2563EB" />
+        </linearGradient>
+    </defs>
+
+    <!-- Abstract wave or flow pattern for dynamism -->
+    <path d="M0 120 C 200 180, 400 60, 600 140 C 800 220, 1000 40, 1200 100 L 1200 200 L 0 200 Z"
+        fill="rgba(255,255,255,0.1)" />
+    <path
+        d="M0 100 C 150 150, 300 50, 450 120 C 600 190, 750 30, 900 100 C 1050 170, 1200 70, 1200 70 L 1200 200 L 0 200 Z"
+        fill="rgba(255,255,255,0.05)" />
+
+    <!-- Subtle invoice icon elements -->
+    <!-- Larger document outline -->
+    <rect x="80" y="40" width="100" height="120" rx="15" fill="rgba(255,255,255,0.15)"
+        stroke="rgba(255,255,255,0.2)" stroke-width="2" />
+    <!-- Folded corner -->
+    <path d="M180 40 L150 40 L180 70 Z" fill="rgba(255,255,255,0.1)" />
+
+    <!-- Abstract lines inside the document -->
+    <rect x="100" y="60" width="60" height="8" rx="2" fill="rgba(255,255,255,0.3)" />
+    <rect x="100" y="80" width="50" height="8" rx="2" fill="rgba(255,255,255,0.25)" />
+    <rect x="100" y="100" width="40" height="8" rx="2" fill="rgba(255,255,255,0.2)" />
+
+    <!-- Currency symbols scattered subtly -->
+    <text x="700" y="80" font-family="Inter, sans-serif" font-size="40" fill="rgba(255,255,255,0.1)"
+        font-weight="bold">$</text>
+    <text x="950" y="150" font-family="Inter, sans-serif" font-size="30"
+        fill="rgba(255,255,255,0.08)" font-weight="bold">€</text>
+    <text x="300" y="160" font-family="Inter, sans-serif" font-size="35"
+        fill="rgba(255,255,255,0.09)" font-weight="bold">£</text>
+</svg>

@@ -1,0 +1,35 @@
+{
+    "Invoice": {
+        "Salutation": "Mr.",
+        "Name": "John Doe",
+        "Street": "123 Main St",
+        "ZIP": "12345",
+        "City": "Anytown",
+        "DocumentType": "Invoice",
+        "DocumentNumber": "INV-001",
+        "DocumentDate": "2025-12-01",
+        "CustomerNumber": "CUST-001",
+        "Net": 100.00,
+        "VATRate": 19.00,
+        "VAT": 19.00,
+        "Total": 119.00,
+        "DueDate": "2025-12-24",
+        "TableName": "Listing"
+    },
+    "Items": [
+        {
+            "Description": "Item 1",
+            "Quantity": 1,
+            "Unit": "pcs",
+            "UnitPrice": 100.00,
+            "TotalPrice": 100.00
+        },
+        {
+            "Description": "Item 2",
+            "Quantity": 2,
+            "Unit": "pcs",
+            "UnitPrice": 10.00,
+            "TotalPrice": 20.00
+        }
+    ]
+}
