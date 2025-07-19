@@ -16,3 +16,19 @@ services:
       - "ewogICJTYWx1dGF0aW9uIjogIk1yLiIsCiAgIk5hbWUiOiAiSm9obiBEb2UiLAogICJTdHJlZXQiOiAiMTIzIE1haW4gU3QiLAogICJaSVAiOiAiMTIzNDUiLAogICJDaXR5IjogIkFueXRvd24iLAogICJEb2N1bWVudFR5cGUiOiAiSW52b2ljZSIsCiAgIkRvY3VtZW50TnVtYmVyIjogIklOVi0wMDEiLAogICJEb2N1bWVudERhdGUiOiAiMjAyNS0xMi0wMSIsCiAgIkN1c3RvbWVyTnVtYmVyIjogIkNVU1QtMDAxIiwKICAiTmV0IjogMTAwLjAwLAogICJWQVRSYXRlIjogMTkuMDAsCiAgIlZBVCI6IDE5LjAwLAogICJUb3RhbCI6IDExOS4wMCwKICAiRHVlRGF0ZSI6ICIyMDI1LTEyLTI0IiwKICAiVGFibGVOYW1lIjogIkxpc3RpbmciCn0K"
       - "--items"
       - "WwogIHsKICAgICJEZXNjcmlwdGlvbiI6ICJJdGVtIDEiLAogICAgIlF1YW50aXR5IjogMSwKICAgICJVbml0IjogInBjcyIsCiAgICAiVW5pdFByaWNlIjogMTAwLjAwLAogICAgIlRvdGFsUHJpY2UiOiAxMDAuMDAKICB9LAogIHsKICAgICJEZXNjcmlwdGlvbiI6ICJJdGVtIDIiLAogICAgIlF1YW50aXR5IjogMiwKICAgICJVbml0IjogInBjcyIsCiAgICAiVW5pdFByaWNlIjogMTAuMDAsCiAgICAiVG90YWxQcmljZSI6IDIwLjAwCiAgfQpdCg=="
+
+  server:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: mheers/godtemplate:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    command:
+      - "server"
+      - "--port"
+      - "8080"
+      - "--template"
+      - "/app/templates/template.odt"

@@ -24,13 +24,13 @@ RUN [ "$(uname)" = Darwin ] && system=darwin || system=linux; \
 # final stage
 FROM ${base}
 WORKDIR /app
-COPY --from=builder /go/src/app/goapp /usr/local/bin/godtemplate
 
 RUN apt-get update && \
     apt-get install -y libreoffice libreoffice-java-common && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+COPY --from=builder /go/src/app/goapp /usr/local/bin/godtemplate
 RUN chmod +x /usr/local/bin/godtemplate
 
 ENTRYPOINT ["/usr/local/bin/godtemplate"]

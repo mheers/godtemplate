@@ -23,4 +23,5 @@ func Execute() error {
 func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(renderCmd)
+	rootCmd.AddCommand(serverCmd)
 }

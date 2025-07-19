@@ -2,6 +2,14 @@
 
 > A Go library for manipulating OpenDocumentText files
 
+## Features
+
+- Render invoices from ODT templates
+- Supports JSON and base64 encoded data
+- Provides a CLI tool and a server implementation
+- Can be used as a library in Go applications
+- Docker image available for easy deployment
+
 ## Usage
 
 ### As Library
@@ -49,7 +57,7 @@ func main() {
 ### As CLI Tool
 
 ```bash
-godtemplate render --template templates/template.odt --output /tmp/output_invoice.odt --invoice $(cat example/data.json| jq .Invoice -r | base64 -w 0) --items $(cat example/data.json | jq .Items -r | base64 -w 0)
+godtemplate render --template templates/template.odt --output /tmp/output_invoice.odt --invoice $(cat example/data.json| jq .invoice -r | base64 -w 0) --items $(cat example/data.json | jq .items -r | base64 -w 0)
 ```
 
 ### As Docker Image
@@ -59,6 +67,12 @@ docker run --rm -v $(pwd):/data mheers/godtemplate render --template /data/templ
 ```
 
 Instead of odt, you can also specify `pdf` as output format. The tool will convert the ODT file to PDF using LibreOffice. This requires LibreOffice to be installed on your system. LibreOffice is already included in the Docker image.
+
+### As Server
+
+You can also run the tool as a server that provides HTTP endpoints to render invoices as PDF documents from ODT templates.
+
+For detailed instructions on how to run the server, see the [SERVER.md](SERVER.md) file.
 
 ## License
 This project is licensed under the MIT License.

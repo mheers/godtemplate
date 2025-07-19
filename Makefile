@@ -15,11 +15,8 @@ set-version: ## Sets the version
 docker: set-version ##  Builds the mheers/godtemplate application
 	docker buildx build --platform linux/amd64 -t mheers/godtemplate --output type=docker .
 
-docker-arm64: set-version ##  Builds the mheers/godtemplate application for arm64
-	docker buildx build --platform linux/arm64 -t mheers/godtemplate --output type=docker .
-
-docker-multi: set-version ##  Builds the mheers/godtemplate application for amd64 and arm64
-	docker buildx build --platform linux/amd64,linux/arm64 -t mheers/godtemplate --push .
+docker-and-push: set-version ##  Builds the mheers/godtemplate application for amd64 and pushes it to Docker Hub
+	docker buildx build --platform linux/amd64 -t mheers/godtemplate --push .
 
 push:
 	docker push mheers/godtemplate

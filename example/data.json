@@ -1,5 +1,5 @@
 {
-    "Invoice": {
+    "invoice": {
         "Salutation": "Mr.",
         "Name": "John Doe",
         "Street": "123 Main St",
@@ -16,7 +16,7 @@
         "DueDate": "2025-12-24",
         "TableName": "Listing"
     },
-    "Items": [
+    "items": [
         {
             "Description": "Item 1",
             "Quantity": 1,
