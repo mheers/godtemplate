@@ -21,6 +21,11 @@ type Invoice struct {
 	DocumentDate   string
 	DateFormat     string
 	CustomerNumber string
+	VATIDText      string
+	VATID          string
+	CompanyText    string
+	CompanyName    string
+	VATHint        string
 	Net            float64
 	VATRate        float64
 	VAT            float64
@@ -91,6 +96,11 @@ func RenderInvoice(templateInput string, invoice Invoice, items []InvoiceItem, r
 		{"documentnumber", invoice.DocumentNumber},
 		{"documentdate", documentDate},
 		{"customernumber", invoice.CustomerNumber},
+		{"vatidtext", invoice.VATIDText},
+		{"vatid", invoice.VATID},
+		{"companytext", invoice.CompanyText},
+		{"companyname", invoice.CompanyName},
+		{"vathint", invoice.VATHint},
 		{"net", fmt.Sprintf("%.2f €", invoice.Net)},
 		{"vatrate", fmt.Sprintf("%.2f %%", invoice.VATRate)},
 		{"vat", fmt.Sprintf("%.2f €", invoice.VAT)},
