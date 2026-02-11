@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/mheers/godtemplate"
 )
@@ -18,6 +19,7 @@ type Invoice struct {
 	DocumentType   string
 	DocumentNumber string
 	DocumentDate   string
+	DateFormat     string
 	CustomerNumber string
 	Net            float64
 	VATRate        float64
@@ -75,6 +77,9 @@ func RenderInvoice(templateInput string, invoice Invoice, items []InvoiceItem, r
 
 	r.ReinsertRows(table, last3Rows)
 
+	documentDate := formatDate(invoice.DocumentDate, invoice.DateFormat)
+	dueDate := formatDate(invoice.DueDate, invoice.DateFormat)
+
 	mapping := [][2]string{
 		{"salutation", invoice.Salutation},
 		{"name", invoice.Name},
@@ -84,13 +89,13 @@ func RenderInvoice(templateInput string, invoice Invoice, items []InvoiceItem, r
 		{"tel", invoice.Telephone},
 		{"documenttype", invoice.DocumentType},
 		{"documentnumber", invoice.DocumentNumber},
-		{"documentdate", invoice.DocumentDate},
+		{"documentdate", documentDate},
 		{"customernumber", invoice.CustomerNumber},
 		{"net", fmt.Sprintf("%.2f €", invoice.Net)},
 		{"vatrate", fmt.Sprintf("%.2f %%", invoice.VATRate)},
 		{"vat", fmt.Sprintf("%.2f €", invoice.VAT)},
 		{"total", fmt.Sprintf("%.2f €", invoice.Total)},
-		{"duedate", invoice.DueDate},
+		{"duedate", dueDate},
 	}
 
 	xmlContent, err := doc.WriteToString()
@@ -159,4 +164,17 @@ func DecodeBase64JSON(base64JSON string, v interface{}) error {
 
 func ConvertODTToPDF(odtPath, pdfPath string) error {
 	return godtemplate.ConvertODTToPDF(odtPath, pdfPath)
+}
+
+func formatDate(value, layout string) string {
+	if value == "" || layout == "" {
+		return value
+	}
+
+	parsed, err := time.Parse("2006-01-02", value)
+	if err != nil {
+		return value
+	}
+
+	return parsed.Format(layout)
 }
