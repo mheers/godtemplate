@@ -71,7 +71,7 @@ Health check endpoint.
 # Test with curl
 curl -X POST \
   -H "Content-Type: application/json" \
-  -d @examples/data.json \
+  -d @example/data.json \
   http://localhost:8080/render \
   --output invoice.pdf
 ```

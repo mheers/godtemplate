@@ -24,6 +24,7 @@ type Invoice struct {
 	Total          float64
 	DueDate        string
 	TableName      string
+	TableColumns   []string
 }
 
 type InvoiceItem struct {
@@ -58,15 +59,15 @@ func RenderInvoice(templateInput string, invoice Invoice, items []InvoiceItem, r
 	firstRow := last3Rows[0]
 	// -> get the style names from the first row for each column
 	styles := r.GetStylesOfRow(firstRow)
+	columns := resolveColumns(invoice.TableColumns, len(styles))
+	if columns == nil {
+		return fmt.Errorf("unsupported invoice table column count: %d", len(styles))
+	}
 
 	for pos, item := range items {
-		values := []string{
-			fmt.Sprintf("%d", pos+1),
-			fmt.Sprintf("%d", item.Quantity),
-			item.Unit,
-			item.Description,
-			fmt.Sprintf("%.2f €", item.UnitPrice),
-			fmt.Sprintf("%.2f €", item.TotalPrice),
+		values, err := buildTableValues(columns, pos, item)
+		if err != nil {
+			return err
 		}
 		r.TableInsert(doc, table, values, styles)
 	}
@@ -98,6 +99,47 @@ func RenderInvoice(templateInput string, invoice Invoice, items []InvoiceItem, r
 	xmlContent = r.ReplaceValues(xmlContent, mapping)
 
 	return r.WriteContent(templateInput, resultOutput, xmlContent)
+}
+
+func resolveColumns(configured []string, styleCount int) []string {
+	if len(configured) > 0 {
+		return configured
+	}
+
+	switch styleCount {
+	case 4:
+		return []string{"menge", "text", "betrag", "gesamt"}
+	case 5:
+		return []string{"position", "menge", "text", "betrag", "gesamt"}
+	case 6:
+		return []string{"position", "menge", "einheit", "text", "betrag", "gesamt"}
+	default:
+		return nil
+	}
+}
+
+func buildTableValues(columns []string, position int, item InvoiceItem) ([]string, error) {
+	values := make([]string, 0, len(columns))
+	for _, column := range columns {
+		switch column {
+		case "position", "pos", "nr":
+			values = append(values, fmt.Sprintf("%d", position+1))
+		case "menge", "qty", "quantity":
+			values = append(values, fmt.Sprintf("%d", item.Quantity))
+		case "einheit", "unit":
+			values = append(values, item.Unit)
+		case "text", "beschreibung", "description":
+			values = append(values, item.Description)
+		case "betrag", "unitprice", "price":
+			values = append(values, fmt.Sprintf("%.2f €", item.UnitPrice))
+		case "gesamt", "total", "totalprice":
+			values = append(values, fmt.Sprintf("%.2f €", item.TotalPrice))
+		default:
+			return nil, fmt.Errorf("unsupported invoice table column: %s", column)
+		}
+	}
+
+	return values, nil
 }
 
 func DecodeBase64JSON(base64JSON string, v interface{}) error {
