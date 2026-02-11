@@ -148,6 +148,7 @@ func (r *Replacer) CleanXMLTemplate(xml string) string {
 // Replace values in XML string using a key/value mapping
 func (r *Replacer) ReplaceValues(xml string, mapping [][2]string) string {
 	xml = r.CleanXMLTemplate(xml)
+	xml = r.NormalizePlaceholderSpans(xml)
 
 	for _, pair := range mapping {
 		key, edit := pair[0], pair[1]
@@ -162,6 +163,68 @@ func (r *Replacer) ReplaceValues(xml string, mapping [][2]string) string {
 	}
 	fmt.Println(xml)
 	return xml
+}
+
+func (r *Replacer) NormalizePlaceholderSpans(xml string) string {
+	data := []byte(xml)
+	result := make([]byte, 0, len(data))
+
+	for i := 0; i < len(data); i++ {
+		if data[i] != '$' {
+			result = append(result, data[i])
+			continue
+		}
+
+		result = append(result, data[i])
+		i++
+		for i < len(data) {
+			switch {
+			case data[i] == '<' && hasPrefixAt(data, i, "<text:span"):
+				end := bytes.IndexByte(data[i:], '>')
+				if end == -1 {
+					return string(result) + string(data[i:])
+				}
+				i += end + 1
+				continue
+			case data[i] == '<' && hasPrefixAt(data, i, "</text:span"):
+				end := bytes.IndexByte(data[i:], '>')
+				if end == -1 {
+					return string(result) + string(data[i:])
+				}
+				i += end + 1
+				continue
+			case isPlaceholderChar(data[i]):
+				result = append(result, data[i])
+				i++
+				continue
+			default:
+				result = append(result, data[i])
+				break
+			}
+			break
+		}
+		if i >= len(data) {
+			break
+		}
+	}
+
+	return string(result)
+}
+
+func hasPrefixAt(data []byte, index int, prefix string) bool {
+	if index+len(prefix) > len(data) {
+		return false
+	}
+	for i := 0; i < len(prefix); i++ {
+		if data[index+i] != prefix[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func isPlaceholderChar(b byte) bool {
+	return (b >= 'A' && b <= 'Z') || (b >= 'a' && b <= 'z') || (b >= '0' && b <= '9') || b == '_'
 }
 
 // Write new content.xml into a new zip file
