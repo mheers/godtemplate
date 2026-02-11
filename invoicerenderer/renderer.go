@@ -14,6 +14,7 @@ type Invoice struct {
 	Street         string
 	ZIP            string
 	City           string
+	Telephone      string
 	DocumentType   string
 	DocumentNumber string
 	DocumentDate   string
@@ -80,6 +81,7 @@ func RenderInvoice(templateInput string, invoice Invoice, items []InvoiceItem, r
 		{"street", invoice.Street},
 		{"zip", invoice.ZIP},
 		{"city", invoice.City},
+		{"tel", invoice.Telephone},
 		{"documenttype", invoice.DocumentType},
 		{"documentnumber", invoice.DocumentNumber},
 		{"documentdate", invoice.DocumentDate},
