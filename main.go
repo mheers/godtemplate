@@ -30,7 +30,6 @@ func (r *Replacer) OpenFile(fileName string) (*zip.ReadCloser, error) {
 func (r *Replacer) GetDocument(zipReader *zip.ReadCloser) (*etree.Document, *zip.File, error) {
 	var contentFile *zip.File
 	for _, f := range zipReader.File {
-		fmt.Println(f.Name)
 		if f.Name == "content.xml" {
 			contentFile = f
 			break
@@ -74,7 +73,6 @@ func (r *Replacer) GetCell(doc *etree.Document, value, tableStyle, textStyle str
 	cell.CreateAttr("table:style-name", tableStyle)
 
 	for _, line := range strings.Split(value, "\n") {
-		fmt.Println("new node for", line)
 		p := doc.CreateElement("text:p")
 		p.CreateAttr("text:style-name", textStyle)
 		p.SetText(line)
@@ -158,10 +156,8 @@ func (r *Replacer) ReplaceValues(xml string, mapping [][2]string) string {
 				edit = fmt.Sprintf("%s.%s.%s", parts[2], parts[1], parts[0])
 			}
 		}
-		fmt.Println("replacing:", "$"+strings.ToUpper(key), edit)
 		xml = strings.ReplaceAll(xml, "$"+strings.ToUpper(key), edit)
 	}
-	fmt.Println(xml)
 	return xml
 }
 
@@ -178,32 +174,51 @@ func (r *Replacer) NormalizePlaceholderSpans(xml string) string {
 		result = append(result, data[i])
 		i++
 		for i < len(data) {
-			switch {
-			case data[i] == '<' && hasPrefixAt(data, i, "<text:span"):
-				end := bytes.IndexByte(data[i:], '>')
-				if end == -1 {
-					return string(result) + string(data[i:])
-				}
-				i += end + 1
-				continue
-			case data[i] == '<' && hasPrefixAt(data, i, "</text:span"):
-				end := bytes.IndexByte(data[i:], '>')
-				if end == -1 {
-					return string(result) + string(data[i:])
-				}
-				i += end + 1
-				continue
-			case isPlaceholderChar(data[i]):
+			if isPlaceholderChar(data[i]) {
 				result = append(result, data[i])
 				i++
 				continue
-			default:
-				result = append(result, data[i])
-				break
 			}
-			break
-		}
-		if i >= len(data) {
+
+			// Check for a span boundary: </text:span>...<text:span ...>
+			if data[i] == '<' && hasPrefixAt(data, i, "</text:span") {
+				endClose := bytes.IndexByte(data[i:], '>')
+				if endClose == -1 {
+					result = append(result, data[i:]...)
+					return string(result)
+				}
+				afterClose := i + endClose + 1
+				// Skip whitespace between tags
+				j := afterClose
+				for j < len(data) && (data[j] == ' ' || data[j] == '\t' || data[j] == '\n' || data[j] == '\r') {
+					j++
+				}
+				if j < len(data) && hasPrefixAt(data, j, "<text:span") {
+					// Inner span boundary: skip both closing and opening tags
+					endOpen := bytes.IndexByte(data[j:], '>')
+					if endOpen == -1 {
+						result = append(result, data[j:]...)
+						return string(result)
+					}
+					i = j + endOpen + 1
+					continue
+				}
+			}
+
+			// Check for a lone opening span (e.g., $<text:span ...>NAME...)
+			if data[i] == '<' && hasPrefixAt(data, i, "<text:span") {
+				end := bytes.IndexByte(data[i:], '>')
+				if end == -1 {
+					result = append(result, data[i:]...)
+					return string(result)
+				}
+				i += end + 1
+				continue
+			}
+
+			// Any other character (or unpaired </text:span>) ends the placeholder.
+			// Back up i so the outer loop's i++ re-processes this character.
+			i--
 			break
 		}
 	}
@@ -247,10 +262,14 @@ func (r *Replacer) WriteContent(srcZipPath, dstZipPath string, xmlContent string
 	defer zipWriter.Close()
 
 	for _, file := range originalZip.File {
-		var writer io.Writer
-		var w io.ReadCloser
 		if file.Name == "content.xml" {
-			writer, err = zipWriter.Create(file.Name)
+			// Create a fresh header for the new content.xml;
+			// we cannot reuse the original header because the
+			// compressed/uncompressed sizes and CRC differ.
+			writer, err := zipWriter.CreateHeader(&zip.FileHeader{
+				Name:   "content.xml",
+				Method: zip.Deflate,
+			})
 			if err != nil {
 				return err
 			}
@@ -259,17 +278,9 @@ func (r *Replacer) WriteContent(srcZipPath, dstZipPath string, xmlContent string
 				return err
 			}
 		} else {
-			writer, err = zipWriter.Create(file.Name)
-			if err != nil {
-				return err
-			}
-			w, err = file.Open()
-			if err != nil {
-				return err
-			}
-			_, err = io.Copy(writer, w)
-			w.Close()
-			if err != nil {
+			// Copy the entry verbatim to preserve the exact original
+			// ZIP structure (no extra timestamp fields added by Go).
+			if err := zipWriter.Copy(file); err != nil {
 				return err
 			}
 		}
@@ -278,7 +289,12 @@ func (r *Replacer) WriteContent(srcZipPath, dstZipPath string, xmlContent string
 }
 
 func ConvertODTToPDF(odtPath, pdfPath string) error {
-	// executes `libreoffice --convert-to pdf <odtPath> --outdir <pdfPath>`
-	cmd := exec.Command("libreoffice", "--convert-to", "pdf", odtPath, "--outdir", filepath.Dir(pdfPath))
-	return cmd.Run()
+	// executes `libreoffice --headless --convert-to pdf <odtPath> --outdir <dir>`
+	outDir := filepath.Dir(pdfPath)
+	cmd := exec.Command("libreoffice", "--headless", "--convert-to", "pdf", odtPath, "--outdir", outDir)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("libreoffice conversion failed: %w\noutput: %s", err, string(output))
+	}
+	return nil
 }
