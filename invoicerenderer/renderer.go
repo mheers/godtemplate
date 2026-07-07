@@ -26,6 +26,11 @@ type Invoice struct {
 	CompanyText    string
 	CompanyName    string
 	VATHint        string
+	// Currency is the ISO 4217 currency code (e.g. "EUR", "CHF") used when
+	// formatting monetary values. If empty, "EUR" is used as a default and
+	// the symbol " €" is appended after the amount. When set, the symbol
+	// " <code>" is appended instead, e.g. "100.00 CHF".
+	Currency       string
 	Net            float64
 	VATRate        float64
 	VAT            float64
@@ -33,6 +38,17 @@ type Invoice struct {
 	DueDate        string
 	TableName      string
 	TableColumns   []string
+}
+
+// formatAmount renders a monetary value with the configured currency symbol.
+// An empty currency falls back to the historical default " €" to keep
+// backwards compatibility for callers that do not set Currency.
+func (i Invoice) formatAmount(value float64) string {
+	currency := i.Currency
+	if currency == "" {
+		return fmt.Sprintf("%.2f €", value)
+	}
+	return fmt.Sprintf("%.2f %s", value, currency)
 }
 
 type InvoiceItem struct {
@@ -73,7 +89,7 @@ func RenderInvoice(templateInput string, invoice Invoice, items []InvoiceItem, r
 	}
 
 	for pos, item := range items {
-		values, err := buildTableValues(columns, pos, item)
+		values, err := buildTableValues(columns, pos, item, invoice.formatAmount)
 		if err != nil {
 			return err
 		}
@@ -101,10 +117,10 @@ func RenderInvoice(templateInput string, invoice Invoice, items []InvoiceItem, r
 		{"companytext", invoice.CompanyText},
 		{"companyname", invoice.CompanyName},
 		{"vathint", invoice.VATHint},
-		{"net", fmt.Sprintf("%.2f €", invoice.Net)},
+		{"net", invoice.formatAmount(invoice.Net)},
 		{"vatrate", fmt.Sprintf("%.2f %%", invoice.VATRate)},
-		{"vat", fmt.Sprintf("%.2f €", invoice.VAT)},
-		{"total", fmt.Sprintf("%.2f €", invoice.Total)},
+		{"vat", invoice.formatAmount(invoice.VAT)},
+		{"total", invoice.formatAmount(invoice.Total)},
 		{"duedate", dueDate},
 	}
 
@@ -135,7 +151,7 @@ func resolveColumns(configured []string, styleCount int) []string {
 	}
 }
 
-func buildTableValues(columns []string, position int, item InvoiceItem) ([]string, error) {
+func buildTableValues(columns []string, position int, item InvoiceItem, formatAmount func(float64) string) ([]string, error) {
 	values := make([]string, 0, len(columns))
 	for _, column := range columns {
 		switch column {
@@ -148,9 +164,9 @@ func buildTableValues(columns []string, position int, item InvoiceItem) ([]strin
 		case "text", "beschreibung", "description":
 			values = append(values, item.Description)
 		case "betrag", "unitprice", "price":
-			values = append(values, fmt.Sprintf("%.2f €", item.UnitPrice))
+			values = append(values, formatAmount(item.UnitPrice))
 		case "gesamt", "total", "totalprice":
-			values = append(values, fmt.Sprintf("%.2f €", item.TotalPrice))
+			values = append(values, formatAmount(item.TotalPrice))
 		default:
 			return nil, fmt.Errorf("unsupported invoice table column: %s", column)
 		}
