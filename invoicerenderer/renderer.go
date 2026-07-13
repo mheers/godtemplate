@@ -30,14 +30,17 @@ type Invoice struct {
 	// formatting monetary values. If empty, "EUR" is used as a default and
 	// the symbol " €" is appended after the amount. When set, the symbol
 	// " <code>" is appended instead, e.g. "100.00 CHF".
-	Currency       string
-	Net            float64
-	VATRate        float64
-	VAT            float64
-	Total          float64
-	DueDate        string
-	TableName      string
-	TableColumns   []string
+	Currency     string
+	Net          float64
+	VATRate      float64
+	VAT          float64
+	Total        float64
+	DueDate      string
+	TableName    string
+	TableColumns []string
+	// BackupRows specifies how many rows at the end of the table should be
+	// backed up and reinserted after inserting new rows. If 0, defaults to 3.
+	BackupRows int
 }
 
 // formatAmount renders a monetary value with the configured currency symbol.
@@ -73,14 +76,18 @@ func RenderInvoice(templateInput string, invoice Invoice, items []InvoiceItem, r
 	}
 
 	tableName := invoice.TableName
-	last3Rows := r.BackupLastXRows(r.GetTableElement(doc, tableName), 3)
+	backupRows := invoice.BackupRows
+	if backupRows == 0 {
+		backupRows = 3 // default for backwards compatibility
+	}
+	lastRows := r.BackupLastXRows(r.GetTableElement(doc, tableName), backupRows)
 	table := r.GetTableElement(doc, tableName)
 
-	// get the first row of the last3Rows to use as a template for new rows
-	if len(last3Rows) == 0 {
+	// get the first row of the lastRows to use as a template for new rows
+	if len(lastRows) == 0 {
 		return fmt.Errorf("no rows found in table %s", tableName)
 	}
-	firstRow := last3Rows[0]
+	firstRow := lastRows[0]
 	// -> get the style names from the first row for each column
 	styles := r.GetStylesOfRow(firstRow)
 	columns := resolveColumns(invoice.TableColumns, len(styles))
@@ -96,7 +103,7 @@ func RenderInvoice(templateInput string, invoice Invoice, items []InvoiceItem, r
 		r.TableInsert(doc, table, values, styles)
 	}
 
-	r.ReinsertRows(table, last3Rows)
+	r.ReinsertRows(table, lastRows)
 
 	documentDate := formatDate(invoice.DocumentDate, invoice.DateFormat)
 	dueDate := formatDate(invoice.DueDate, invoice.DateFormat)
